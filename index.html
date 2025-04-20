@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --gold: #FFD700;
+            --dark-gold: #C5A100;
+            --light-gold: #FFEEAA;
+            --bg-color: #110d15;
+            --card-bg: #1a1520;
+            --text-color: #ffffff;
+            --blur-color: rgba(17, 13, 21, 0.7);
+            --error-color: #ff3860;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, var(--bg-color) 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        /* Header Styles */
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+        }
+        
+        .select-game-container {
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .select-game-btn {
+            width: 100%;
+            padding: 12px 15px;
+            background: linear-gradient(145deg, #1a1520, #2a2130);
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .select-game-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 20%,
+                rgba(255, 255, 255, 0.1) 50%,
+                rgba(255, 255, 255, 0) 80%
+            );
+            transform: rotate(30deg);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(30deg); }
+            100% { transform: translateX(100%) rotate(30deg); }
+        }
+        
+        .select-game-btn:hover {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .select-game-btn::before {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+        
+        .select-game-btn.active::before {
+            transform: rotate(180deg);
+        }
+        
+        .game-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: var(--card-bg);
+            border: 1px solid var(--gold);
+            border-radius: 8px;
+            margin-top: 5px;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-dropdown.active {
+            display: block;
+        }
+        
+        .game-option {
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            font-size: 14px;
+        }
+        
+        .game-option:hover {
+            background-color: rgba(255, 215, 0, 0.1);
+        }
+        
+        .game-option::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 20%,
+                rgba(255, 255, 255, 0.05) 50%,
+                rgba(255, 255, 255, 0) 80%
+            );
+            transform: rotate(30deg);
+            animation: shimmer 3s infinite;
+        }
+        
+        .game-option img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+        
+        .game-option span {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .winning-user {
+            font-size: 14px;
+            color: var(--gold);
+            text-align: center;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+            animation: glow 2s infinite alternate;
+            font-weight: 500;
+            position: relative;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+            }
+            to {
+                text-shadow: 0 0 12px rgba(255, 215, 0, 0.8);
+            }
+        }
+        
+        .game-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            filter: blur(5px);
+            transition: filter 0.3s ease;
+        }
+        
+        body.unblur .game-info {
+            filter: none;
+        }
+        
+        .game-logo {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+            padding: 4px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-logo::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 20%,
+                rgba(255, 255, 255, 0.1) 50%,
+                rgba(255, 255, 255, 0) 80%
+            );
+            transform: rotate(30deg);
+            animation: shimmer 3s infinite;
+        }
+        
+        .game-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gold);
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+            position: relative;
+        }
+        
+        .game-name::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--gold), transparent);
+            animation: underline-glow 2s infinite;
+        }
+        
+        @keyframes underline-glow {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+        
+        /* Prediction Container */
+        .prediction-container {
+            background: linear-gradient(145deg, #1a1520, #2a2130);
+            border: 2px solid var(--gold);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            filter: blur(5px);
+            transition: filter 0.3s ease;
+        }
+        
+        body.unblur .prediction-container {
+            filter: none;
+        }
+        
+        .prediction-container::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 20%,
+                rgba(255, 255, 255, 0.05) 50%,
+                rgba(255, 255, 255, 0) 80%
+            );
+            transform: rotate(30deg);
+            animation: shimmer 3s infinite;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .input-group label {
+            font-size: 14px;
+            color: var(--gold);
+            font-weight: 500;
+        }
+        
+        .input-group input {
+            padding: 10px 12px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--gold);
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input:focus {
+            border-color: var(--light-gold);
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+        }
+        
+        .input-group input.error {
+            border-color: var(--error-color);
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        .result-container {
+            min-height: 70px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px dashed var(--gold);
+            position: relative;
+        }
+        
+        .result-digit {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            position: absolute;
+            animation: mixing 1s infinite, fadeInOut 1s infinite;
+            opacity: 0;
+        }
+        
+        @keyframes mixing {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(8px, -8px) rotate(8deg); }
+            50% { transform: translate(-8px, 8px) rotate(-8deg); }
+            75% { transform: translate(4px, -4px) rotate(4deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        
+        .final-result {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .final-digit {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            animation: digitAppear 0.5s ease-out;
+        }
+        
+        @keyframes digitAppear {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        .start-btn {
+            padding: 12px;
+            background: linear-gradient(to right, var(--gold), var(--dark-gold));
+            color: #000;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .start-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 20%,
+                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0) 80%
+            );
+            transform: rotate(30deg);
+            animation: shimmer 2s infinite;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(255, 215, 0, 0.5);
+        }
+        
+        .start-btn:active {
+            transform: translateY(1px);
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            filter: blur(5px);
+            transition: filter 0.3s ease;
+        }
+        
+        body.unblur .action-buttons {
+            filter: none;
+        }
+        
+        .action-btn {
+            padding: 10px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(to right, var(--gold), var(--dark-gold));
+            color: #000;
+            width: 100%;
+        }
+        
+        .action-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to right,
+                rgba(255, 255, 255, 0) 20%,
+                rgba(255, 255, 255, 0.2) 50%,
+                rgba(255, 255, 255, 0) 80%
+            );
+            transform: rotate(30deg);
+            animation: shimmer 3s infinite;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+        }
+        
+        .action-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .action-btn i {
+            font-size: 16px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .container {
+                padding: 12px;
+                gap: 12px;
+            }
+            
+            .result-digit, .final-digit {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="select-game-container">
+                <button class="select-game-btn" id="selectGameBtn">Select Game</button>
+                <div class="game-dropdown">
+                    <!-- Game options will be added by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="winning-user" id="winningUser"></div>
+            
+            <div class="game-info">
+                <img src="" alt="Game Logo" class="game-logo" id="gameLogo">
+                <div class="game-name" id="gameName">No Game Selected</div>
+            </div>
+        </div>
+        
+        <div class="prediction-container" id="predictionContainer">
+            <div class="input-group">
+                <label for="periodNumber">Enter Period Number</label>
+                <input type="number" id="periodNumber" placeholder="e.g. 123456">
+            </div>
+            
+            <div class="result-container" id="resultContainer">
+                <div id="animationContainer"></div>
+                <div class="final-result" id="finalResult"></div>
+            </div>
+            
+            <button class="start-btn" id="startBtn">Start Prediction</button>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="action-btn" id="registerBtn">
+                <i class="fas fa-user-plus"></i> Register
+            </button>
+            <button class="action-btn" id="telegramBtn">
+                <i class="fab fa-telegram"></i> Join Telegram
+            </button>
+            <button class="action-btn" id="supportBtn">
+                <i class="fas fa-headset"></i> Customer Support
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game data
+        const games = [
+            { id: 1, name: "Color Prediction", logo: "https://via.placeholder.com/110?text=CP", registerLink: "https://example.com/register/color" },
+            { id: 2, name: "Dice Game", logo: "https://via.placeholder.com/110?text=DG", registerLink: "https://example.com/register/dice" },
+            { id: 3, name: "Number Guessing", logo: "https://via.placeholder.com/110?text=NG", registerLink: "https://example.com/register/number" },
+            { id: 4, name: "Card Flip", logo: "https://via.placeholder.com/110?text=CF", registerLink: "https://example.com/register/card" },
+            { id: 5, name: "Roulette", logo: "https://via.placeholder.com/110?text=RL", registerLink: "https://example.com/register/roulette" },
+            { id: 6, name: "Lottery", logo: "https://via.placeholder.com/110?text=LT", registerLink: "https://example.com/register/lottery" },
+            { id: 7, name: "Bingo", logo: "https://via.placeholder.com/110?text=BG", registerLink: "https://example.com/register/bingo" },
+            { id: 8, name: "Poker", logo: "https://via.placeholder.com/110?text=PK", registerLink: "https://example.com/register/poker" },
+            { id: 9, name: "Blackjack", logo: "https://via.placeholder.com/110?text=BJ", registerLink: "https://example.com/register/blackjack" },
+            { id: 10, name: "Slots", logo: "https://via.placeholder.com/110?text=SL", registerLink: "https://example.com/register/slots" },
+            { id: 11, name: "Crash", logo: "https://via.placeholder.com/110?text=CR", registerLink: "https://example.com/register/crash" },
+            { id: 12, name: "Mines", logo: "https://via.placeholder.com/110?text=MN", registerLink: "https://example.com/register/mines" },
+            { id: 13, name: "Plinko", logo: "https://via.placeholder.com/110?text=PL", registerLink: "https://example.com/register/plinko" },
+            { id: 14, name: "Keno", logo: "https://via.placeholder.com/110?text=KN", registerLink: "https://example.com/register/keno" },
+            { id: 15, name: "Horse Race", logo: "https://via.placeholder.com/110?text=HR", registerLink: "https://example.com/register/horse" },
+            { id: 16, name: "Dragon Tiger", logo: "https://via.placeholder.com/110?text=DT", registerLink: "https://example.com/register/dragon" },
+            { id: 17, name: "Baccarat", logo: "https://via.placeholder.com/110?text=BC", registerLink: "https://example.com/register/baccarat" },
+            { id: 18, name: "Andar Bahar", logo: "https://via.placeholder.com/110?text=AB", registerLink: "https://example.com/register/andar" },
+            { id: 19, name: "Teen Patti", logo: "https://via.placeholder.com/110?text=TP", registerLink: "https://example.com/register/teen" },
+            { id: 20, name: "War", logo: "https://via.placeholder.com/110?text=WR", registerLink: "https://example.com/register/war" },
+            { id: 21, name: "Hi-Lo", logo: "https://via.placeholder.com/110?text=HL", registerLink: "https://example.com/register/hilo" },
+            { id: 22, name: "Limbo", logo: "https://via.placeholder.com/110?text=LB", registerLink: "https://example.com/register/limbo" }
+        ];
+
+        // DOM elements
+        const selectGameBtn = document.getElementById('selectGameBtn');
+        const gameDropdown = document.querySelector('.game-dropdown');
+        const gameLogo = document.getElementById('gameLogo');
+        const gameName = document.getElementById('gameName');
+        const winningUser = document.getElementById('winningUser');
+        const predictionContainer = document.getElementById('predictionContainer');
+        const periodNumberInput = document.getElementById('periodNumber');
+        const startBtn = document.getElementById('startBtn');
+        const animationContainer = document.getElementById('animationContainer');
+        const finalResult = document.getElementById('finalResult');
+        const registerBtn = document.getElementById('registerBtn');
+        const telegramBtn = document.getElementById('telegramBtn');
+        const supportBtn = document.getElementById('supportBtn');
+        const body = document.body;
+
+        // Initialize the app
+        function init() {
+            // Populate game dropdown
+            games.forEach(game => {
+                const gameOption = document.createElement('div');
+                gameOption.className = 'game-option';
+                gameOption.dataset.id = game.id;
+                gameOption.innerHTML = `
+                    <img src="${game.logo}" alt="${game.name}">
+                    <span>${game.name}</span>
+                `;
+                gameOption.addEventListener('click', () => selectGame(game.id));
+                gameDropdown.appendChild(gameOption);
+            });
+
+            // Load selected game from localStorage
+            const selectedGameId = localStorage.getItem('selectedGameId');
+            if (selectedGameId) {
+                selectGame(selectedGameId);
+                body.classList.add('unblur');
+            }
+
+            // Update winning user every 2 seconds
+            updateWinningUser();
+            setInterval(updateWinningUser, 2000);
+
+            // Add event listeners
+            selectGameBtn.addEventListener('click', toggleGameDropdown);
+            startBtn.addEventListener('click', startPrediction);
+            registerBtn.addEventListener('click', () => {
+                const selectedGame = games.find(g => g.id == localStorage.getItem('selectedGameId'));
+                if (selectedGame) {
+                    window.open(selectedGame.registerLink, '_blank');
+                } else {
+                    alert('Please select a game first');
+                }
+            });
+            telegramBtn.addEventListener('click', () => window.open('https://telegram.dog/EarningScripter1', '_blank'));
+            supportBtn.addEventListener('click', () => window.open('https://telegram.dog/EarningScripter1_bot', '_blank'));
+        }
+
+        // Toggle game dropdown
+        function toggleGameDropdown() {
+            gameDropdown.classList.toggle('active');
+            selectGameBtn.classList.toggle('active');
+        }
+
+        // Select a game
+        function selectGame(gameId) {
+            const game = games.find(g => g.id == gameId);
+            if (!game) return;
+
+            // Update UI
+            gameLogo.src = game.logo;
+            gameName.textContent = game.name;
+            selectGameBtn.innerHTML = game.name + '<span></span>'; // Update button text
+            
+            // Store selected game
+            localStorage.setItem('selectedGameId', gameId);
+            
+            // Remove blur from entire page except select game
+            body.classList.add('unblur');
+            
+            // Close dropdown
+            gameDropdown.classList.remove('active');
+            selectGameBtn.classList.remove('active');
+        }
+
+        // Update winning user
+        function updateWinningUser() {
+            const randomUser1 = Math.floor(Math.random() * (999 - 620 + 1)) + 620;
+            const randomUser2 = Math.floor(Math.random() * (999 - 1 + 1)) + 1;
+            const randomAmount = Math.floor(Math.random() * (30000 - 500 + 1)) + 500;
+            winningUser.textContent = `User ${randomUser1}****${String(randomUser2).padStart(3, '0')} Win ₹${randomAmount.toLocaleString()}`;
+        }
+
+        // Start prediction
+        function startPrediction() {
+            const periodNumber = periodNumberInput.value.trim();
+            
+            if (!periodNumber) {
+                // Show error if period number is empty
+                periodNumberInput.classList.add('error');
+                setTimeout(() => {
+                    periodNumberInput.classList.remove('error');
+                }, 500);
+                return;
+            }
+
+            // Clear previous results
+            animationContainer.innerHTML = '';
+            finalResult.innerHTML = '';
+
+            // Show mixing animation
+            for (let i = 0; i < 15; i++) {
+                const img = document.createElement('img');
+                const randomDigit = Math.floor(Math.random() * 10);
+                img.src = `${randomDigit}.png`;
+                img.className = 'result-digit';
+                img.style.left = `${Math.random() * 80}%`;
+                img.style.top = `${Math.random() * 80}%`;
+                img.style.animationDelay = `${i * 0.1}s`;
+                animationContainer.appendChild(img);
+            }
+
+            // Disable button during animation
+            startBtn.disabled = true;
+
+            // After 2 seconds, show final result
+            setTimeout(() => {
+                animationContainer.innerHTML = '';
+                
+                // Generate 5 random digits
+                for (let i = 0; i < 5; i++) {
+                    const randomDigit = Math.floor(Math.random() * 10);
+                    const img = document.createElement('img');
+                    img.src = `${randomDigit}.png`;
+                    img.className = 'final-digit';
+                    img.style.animationDelay = `${i * 0.1}s`;
+                    finalResult.appendChild(img);
+                }
+                
+                startBtn.disabled = false;
+            }, 2000);
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
