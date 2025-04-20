@@ -617,6 +617,15 @@
         const supportBtn = document.getElementById('supportBtn');
         const body = document.body;
 
+        // Function to get unique random numbers
+        function getUniqueRandomNumbers(count, max) {
+            const numbers = new Set();
+            while (numbers.size < count) {
+                numbers.add(Math.floor(Math.random() * max));
+            }
+            return Array.from(numbers);
+        }
+
         // Initialize the app
         function init() {
             // Populate game dropdown
@@ -729,11 +738,12 @@
             setTimeout(() => {
                 animationContainer.innerHTML = '';
                 
-                // Generate 5 random digits
+                // Generate 5 unique random digits
+                const uniqueDigits = getUniqueRandomNumbers(5, 10);
+                
                 for (let i = 0; i < 5; i++) {
-                    const randomDigit = Math.floor(Math.random() * 10);
                     const img = document.createElement('img');
-                    img.src = `${randomDigit}.png`;
+                    img.src = `${uniqueDigits[i]}.png`;
                     img.className = 'final-digit';
                     img.style.animationDelay = `${i * 0.1}s`;
                     finalResult.appendChild(img);
